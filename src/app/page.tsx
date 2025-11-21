@@ -1,65 +1,333 @@
-import Image from "next/image";
+'use client';
+
+import { useSession, signIn, signOut } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { LogOut, Users, Calendar, RefreshCw, ArrowRightLeft, Plus, Trash2 } from 'lucide-react';
+import { canManageSessions, canManageUsers, ROLES } from '@/lib/roles';
+import CreateSessionModal from '@/components/CreateSessionModal';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [selectedSession, setSelectedSession] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  useEffect(() => {
+    if (session) {
+      fetchSessions();
+    }
+  }, [session]);
+
+  const fetchSessions = async () => {
+    try {
+      const res = await fetch('/api/sessions');
+      if (res.ok) {
+        const data = await res.json();
+        setSessions(data.sessions);
+      }
+    } catch (error) {
+      console.error('Failed to fetch sessions', error);
+    }
+  };
+
+  const handleSync = async (sessionId: string) => {
+    setLoading(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}/sync`, {
+        method: 'POST',
+      });
+      if (!res.ok) throw new Error('Sync failed');
+      const data = await res.json();
+      setMessage({ type: 'success', text: data.message });
+      await fetchSessions();
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (sessionId: string, sessionName: string) => {
+    if (!confirm(`Are you sure you want to delete "${sessionName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setLoading(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Delete failed');
+      setMessage({ type: 'success', text: 'Session deleted successfully' });
+      await fetchSessions();
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSwapRequest = async (requesterPlayerId: string, targetPlayerId: string) => {
+    setLoading(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/swaps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requesterPlayerId, targetPlayerId }),
+      });
+      if (!res.ok) throw new Error('Failed to create swap request');
+      setMessage({ type: 'success', text: 'Swap request sent! Check your email.' });
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-12 max-w-md w-full text-center">
+          <div className="text-6xl mb-6">🏐</div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Team Maker</h1>
+          <p className="text-gray-600 mb-8">Balanced team generation for dodgeball sessions</p>
+          <button
+            onClick={() => signIn('google')}
+            className="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-lg"
+          >
+            Sign In with Google
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const userRole = (session.user as any)?.role || ROLES.USER;
+  const isAdmin = canManageSessions(userRole);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Team Maker</h1>
+              <p className="text-sm text-gray-600">
+                {userRole === ROLES.SUPER_ADMIN && '👑 Super Admin'}
+                {userRole === ROLES.COMMITTEE && '⭐ Committee'}
+                {userRole === ROLES.USER && '👤 User'}
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              {canManageUsers(userRole) && (
+                <a
+                  href="/admin/users"
+                  className="flex items-center gap-2 bg-purple-100 hover:bg-purple-200 text-purple-700 px-4 py-2 rounded-lg transition"
+                >
+                  <Users className="w-4 h-4" />
+                  Manage Users
+                </a>
+              )}
+              <span className="text-sm text-gray-700">{session.user?.email}</span>
+              <button
+                onClick={() => signOut()}
+                className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {message && (
+          <div className={`mb-6 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+            }`}>
+            {message.text}
+          </div>
+        )}
+
+        {/* Admin View */}
+        {isAdmin ? (
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Manage Sessions</h2>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Session
+                </button>
+                {canManageUsers(userRole) && (
+                  <a
+                    href="/admin/users"
+                    className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                  >
+                    <Users className="w-4 h-4" />
+                    Manage Users
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-6">
+              {sessions.map((session) => (
+                <div key={session.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
+                  {/* Clickable header area */}
+                  <div
+                    onClick={() => router.push(`/sessions/${session.id}`)}
+                    className="p-6 cursor-pointer hover:bg-gray-50 transition"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">{session.name}</h3>
+                        <p className="text-sm text-gray-600">
+                          {session.teams.length} teams • Last synced: {
+                            session.lastSyncAt
+                              ? new Date(session.lastSyncAt).toLocaleString()
+                              : 'Never'
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {session.teams.map((team: any) => (
+                        <div key={team.id} className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4">
+                          <h4 className="font-semibold text-gray-900 mb-2">{team.name}</h4>
+                          <p className="text-sm text-gray-600 mb-2">{team.players.length} players</p>
+                          <ul className="text-sm space-y-1">
+                            {team.players.slice(0, 3).map((player: any) => (
+                              <li key={player.id} className="text-gray-700">• {player.name}</li>
+                            ))}
+                            {team.players.length > 3 && (
+                              <li className="text-gray-500">+ {team.players.length - 3} more</li>
+                            )}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Action buttons - not clickable for navigation */}
+                  <div className="px-6 pb-6 flex gap-3 border-t border-gray-200 pt-4">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSync(session.id);
+                      }}
+                      disabled={loading}
+                      className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                      Sync
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(session.id, session.name);
+                      }}
+                      disabled={loading}
+                      className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* User View */
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Teams</h2>
+
+            {sessions.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-md p-12 text-center">
+                <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">No sessions available yet.</p>
+              </div>
+            ) : (
+              <div className="grid gap-6">
+                {sessions.map((session) => {
+                  const userTeam = session.teams.find((team: any) =>
+                    team.players.some((p: any) => p.email === session.user?.email)
+                  );
+
+                  return (
+                    <div
+                      key={session.id}
+                      onClick={() => router.push(`/sessions/${session.id}`)}
+                      className="bg-white rounded-xl shadow-md p-6 cursor-pointer hover:shadow-lg transition"
+                    >
+                      <h3 className="text-xl font-bold text-gray-900 mb-4">{session.name}</h3>
+
+                      {userTeam && (
+                        <div className="mb-6 p-4 bg-indigo-50 rounded-lg">
+                          <p className="text-sm text-gray-600 mb-1">You are on:</p>
+                          <p className="text-lg font-semibold text-indigo-600">{userTeam.name}</p>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {session.teams.map((team: any) => (
+                          <div
+                            key={team.id}
+                            className={`rounded-lg p-4 ${team.id === userTeam?.id
+                              ? 'bg-gradient-to-br from-indigo-100 to-purple-100 border-2 border-indigo-300'
+                              : 'bg-gray-50'
+                              }`}
+                          >
+                            <h4 className="font-semibold text-gray-900 mb-2">{team.name}</h4>
+                            <ul className="text-sm space-y-1">
+                              {team.players.map((player: any) => (
+                                <li key={player.id} className="text-gray-700">• {player.name}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-6 pt-6 border-t border-gray-200">
+                        <p className="text-sm text-gray-600 mb-2">
+                          <ArrowRightLeft className="w-4 h-4 inline mr-1" />
+                          Want to swap teams? Contact another player directly or use the swap request feature (coming soon).
+                        </p>
+                        <p className="text-xs text-indigo-600 font-medium mt-3">
+                          👁️ Click anywhere to view full session details
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </main>
+
+      {/* Create Session Modal */}
+      <CreateSessionModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={(sessionId) => {
+          setShowCreateModal(false);
+          router.push(`/sessions/${sessionId}`);
+        }}
+      />
     </div>
   );
 }

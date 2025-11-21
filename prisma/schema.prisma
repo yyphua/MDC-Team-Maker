@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String?
+  role            String   @default("USER") // SUPER_ADMIN, COMMITTEE, USER
+  defaultFolderId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  swapsRequested  SwapRequest[] @relation("SwapRequester")
+  swapsTargeted   SwapRequest[] @relation("SwapTarget")
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  name        String
+  sheetUrl    String
+  sheetId     String
+  folderId    String?
+  teamCount   Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastSyncAt  DateTime?
+
+  teams       Team[]
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  sessionId String
+  name      String
+  createdAt DateTime @default(now())
+
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  players   Player[]
+
+  @@index([sessionId])
+}
+
+model Player {
+  id         String   @id @default(cuid())
+  teamId     String?  // Optional - null for waiting list players
+  uuid       String   // From Google Form
+  name       String
+  email      String?
+  gender     String
+  skillLevel Int
+  timestamp  String?
+  status     String   @default("ACTIVE") // ACTIVE, WAITLIST
+  createdAt  DateTime @default(now())
+
+  team       Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  swapsAsRequester SwapRequest[] @relation("PlayerRequester")
+  swapsAsTarget    SwapRequest[] @relation("PlayerTarget")
+
+  @@index([teamId])
+  @@index([uuid])
+  @@index([status])
+}
+
+model SwapRequest {
+  id              String     @id @default(cuid())
+  requesterId     String
+  requesterPlayerId String
+  targetId        String
+  targetPlayerId  String
+  status          String     @default("PENDING") // PENDING, APPROVED, REJECTED, CANCELLED
+  token           String     @unique
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  expiresAt       DateTime
+
+  requester       User       @relation("SwapRequester", fields: [requesterId], references: [id])
+  target          User       @relation("SwapTarget", fields: [targetId], references: [id])
+  requesterPlayer Player     @relation("PlayerRequester", fields: [requesterPlayerId], references: [id])
+  targetPlayer    Player     @relation("PlayerTarget", fields: [targetPlayerId], references: [id])
+
+  @@index([token])
+  @@index([status])
+}
