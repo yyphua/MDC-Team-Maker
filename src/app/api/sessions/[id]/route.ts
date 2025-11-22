@@ -13,9 +13,10 @@ export async function GET(
     const params = await context.params;
     const session = await getServerSession(authOptions);
 
-    if (!session || !session.user?.email) {
-        return new NextResponse("Unauthorized", { status: 401 });
-    }
+    // Allow public access for viewing session details
+    // if (!session || !session.user?.email) {
+    //     return new NextResponse("Unauthorized", { status: 401 });
+    // }
 
     try {
         const gameSession = await prisma.session.findUnique({
