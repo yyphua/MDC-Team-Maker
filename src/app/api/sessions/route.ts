@@ -82,7 +82,9 @@ export async function POST(req: Request) {
 
         // Auto-sync players from sheet and balance teams
         const accessToken = (session as any).accessToken;
+        console.log("Debug: Session Access Token present:", !!accessToken);
         if (accessToken) {
+            console.log("Debug: Token start:", accessToken.substring(0, 10));
             try {
                 await syncSessionWithSheet(newSession.id, accessToken);
             } catch (syncError) {
