@@ -410,11 +410,10 @@ function PlayerCard({ player, isDragging = false, isWaitlist = false }: { player
             <div className="flex items-center justify-between">
                 <div className="flex-1">
                     <p className="font-semibold text-gray-900 text-sm">{player.name}</p>
-                    <p className="text-xs text-gray-600">{player.email || 'No email'}</p>
+                    <p className="text-xs text-gray-600">{player.gender}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-indigo-600 bg-indigo-100 px-2 py-1 rounded">{player.skillLevel}</span>
-                    <span className="text-xs text-gray-500">{player.gender}</span>
                 </div>
             </div>
         </div>
