@@ -76,8 +76,8 @@ export async function POST(req: Request) {
             requesterEmail: session.user.email,
             targetName: targetPlayer.name,
             targetEmail: targetPlayer.email,
-            requesterTeam: requesterPlayer.team.name,
-            targetTeam: targetPlayer.team.name,
+            requesterTeam: requesterPlayer.team?.name || "No Team",
+            targetTeam: targetPlayer.team?.name || "No Team",
             verifyUrl,
         });
 
