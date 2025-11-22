@@ -84,8 +84,8 @@ export async function POST(req: Request) {
                 requesterEmail: swapRequest.requester.email,
                 targetName: swapRequest.targetPlayer.name,
                 targetEmail: swapRequest.target.email,
-                requesterTeam: swapRequest.requesterPlayer.team.name,
-                targetTeam: swapRequest.targetPlayer.team.name,
+                requesterTeam: swapRequest.requesterPlayer.team?.name || "No Team",
+                targetTeam: swapRequest.targetPlayer.team?.name || "No Team",
                 verifyUrl: '',
                 approved: true,
             });
@@ -107,8 +107,8 @@ export async function POST(req: Request) {
                 requesterEmail: swapRequest.requester.email,
                 targetName: swapRequest.targetPlayer.name,
                 targetEmail: swapRequest.target.email,
-                requesterTeam: swapRequest.requesterPlayer.team.name,
-                targetTeam: swapRequest.targetPlayer.team.name,
+                requesterTeam: swapRequest.requesterPlayer.team?.name || "No Team",
+                targetTeam: swapRequest.targetPlayer.team?.name || "No Team",
                 verifyUrl: '',
                 approved: false,
             });
