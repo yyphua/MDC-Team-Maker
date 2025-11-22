@@ -107,20 +107,20 @@ function SwapVerifyContent() {
                         <div>
                             <p className="text-sm text-gray-600 mb-1">From</p>
                             <p className="font-semibold text-gray-900">{swapRequest.requesterPlayer.name}</p>
-                            <p className="text-sm text-indigo-600">{swapRequest.requesterPlayer.team.name}</p>
+                            <p className="text-sm text-indigo-600">{swapRequest.requesterPlayer.team?.name || 'No Team'}</p>
                         </div>
                         <div>
                             <p className="text-sm text-gray-600 mb-1">To</p>
                             <p className="font-semibold text-gray-900">{swapRequest.targetPlayer.name}</p>
-                            <p className="text-sm text-purple-600">{swapRequest.targetPlayer.team.name}</p>
+                            <p className="text-sm text-purple-600">{swapRequest.targetPlayer.team?.name || 'No Team'}</p>
                         </div>
                     </div>
 
                     <div className="mt-6 pt-6 border-t border-gray-200">
                         <p className="text-sm text-gray-700">
                             <strong>{swapRequest.requesterPlayer.name}</strong> wants to swap teams with you.
-                            If you accept, you will move to <strong>{swapRequest.requesterPlayer.team.name}</strong> and
-                            they will move to <strong>{swapRequest.targetPlayer.team.name}</strong>.
+                            If you accept, you will move to <strong>{swapRequest.requesterPlayer.team?.name || 'No Team'}</strong> and
+                            they will move to <strong>{swapRequest.targetPlayer.team?.name || 'No Team'}</strong>.
                         </p>
                     </div>
                 </div>

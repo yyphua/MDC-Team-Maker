@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { canManageUsers, ROLES } from "@/lib/roles";
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 // GET: List all users (Super Admin only)
 export async function GET() {
     const session = await getServerSession(authOptions);
