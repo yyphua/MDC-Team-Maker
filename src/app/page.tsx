@@ -2,7 +2,7 @@
 
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
-import { LogOut, Users, Calendar, RefreshCw, ArrowRightLeft, Plus, Trash2 } from 'lucide-react';
+import { LogOut, Users, Calendar, RefreshCw, ArrowRightLeft, Plus, Trash2, Share2 } from 'lucide-react';
 import { canManageSessions, canManageUsers, ROLES } from '@/lib/roles';
 import CreateSessionModal from '@/components/CreateSessionModal';
 import { useRouter } from 'next/navigation';
@@ -71,6 +71,18 @@ export default function Home() {
       setMessage({ type: 'error', text: error.message });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleShare = async (sessionId: string) => {
+    const url = `${window.location.origin}/sessions/${sessionId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setMessage({ type: 'success', text: 'Session link copied to clipboard!' });
+      // Clear message after 3 seconds
+      setTimeout(() => setMessage(null), 3000);
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to copy link' });
     }
   };
 
@@ -245,6 +257,16 @@ export default function Home() {
 
                   {/* Action buttons - not clickable for navigation */}
                   <div className="px-6 pb-6 flex gap-3 border-t border-gray-200 pt-4">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShare(session.id);
+                      }}
+                      className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                    >
+                      <Share2 className="w-4 h-4" />
+                      Share
+                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

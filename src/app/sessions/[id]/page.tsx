@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, useDroppable, useDraggable } from '@dnd-kit/core';
-import { RefreshCw, Save, ArrowLeft, Clock } from 'lucide-react';
+import { RefreshCw, Save, ArrowLeft, Clock, Share2 } from 'lucide-react';
 import { canEditTeams } from '@/lib/roles';
 
 interface Player {
@@ -161,6 +161,17 @@ export default function SessionDetailPage() {
         }
     };
 
+    const handleShare = async () => {
+        const url = window.location.href;
+        try {
+            await navigator.clipboard.writeText(url);
+            setMessage({ type: 'success', text: 'Session link copied to clipboard!' });
+            setTimeout(() => setMessage(null), 3000);
+        } catch (err) {
+            setMessage({ type: 'error', text: 'Failed to copy link' });
+        }
+    };
+
     const handleSave = async () => {
         setSaving(true);
         setMessage(null);
@@ -284,6 +295,10 @@ export default function SessionDetailPage() {
                             <div className="flex gap-3">
                                 {canEdit && (
                                     <>
+                                        <button onClick={handleShare} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                                            <Share2 className="w-4 h-4" />
+                                            Share
+                                        </button>
                                         <button onClick={toggleAutoSync} className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${autoSyncEnabled ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                                             <RefreshCw className="w-4 h-4" />
                                             {autoSyncEnabled ? 'Auto-sync ON' : 'Auto-sync OFF'}
