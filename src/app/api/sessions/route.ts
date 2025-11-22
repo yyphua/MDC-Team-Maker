@@ -10,9 +10,10 @@ import { syncSessionWithSheet } from "@/lib/syncer";
 export async function GET() {
     const session = await getServerSession(authOptions);
 
-    if (!session || !session.user?.email) {
-        return new NextResponse("Unauthorized", { status: 401 });
-    }
+    // Allow public access for viewing sessions
+    // if (!session || !session.user?.email) {
+    //     return new NextResponse("Unauthorized", { status: 401 });
+    // }
 
     // All authenticated users can view sessions
     try {

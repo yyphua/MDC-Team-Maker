@@ -63,13 +63,13 @@ export default function SessionDetailPage() {
     const [canEdit, setCanEdit] = useState(false);
 
     useEffect(() => {
-        if (status === 'unauthenticated') {
-            router.push('/');
-        } else if (status === 'authenticated' && sessionId) {
+        if (sessionId) {
             fetchSessionData();
-            fetchUserRole();
+            if (status === 'authenticated') {
+                fetchUserRole();
+            }
         }
-    }, [status, sessionId, router]);
+    }, [status, sessionId]);
 
     useEffect(() => {
         if (!sessionData) return;

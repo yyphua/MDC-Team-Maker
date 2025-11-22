@@ -15,12 +15,13 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
-    if (session) {
+    if (session || isGuest) {
       fetchSessions();
     }
-  }, [session]);
+  }, [session, isGuest]);
 
   const fetchSessions = async () => {
     try {
@@ -91,26 +92,34 @@ export default function Home() {
     }
   };
 
-  if (!session) {
+  if (!session && !isGuest) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-12 max-w-md w-full text-center">
           <div className="text-6xl mb-6">🏐</div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Team Maker</h1>
           <p className="text-gray-600 mb-8">Balanced team generation for dodgeball sessions</p>
-          <button
-            onClick={() => signIn('google')}
-            className="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-lg"
-          >
-            Sign In with Google
-          </button>
+          <div className="space-y-4">
+            <button
+              onClick={() => signIn('google')}
+              className="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-lg"
+            >
+              Sign In with Google
+            </button>
+            <button
+              onClick={() => setIsGuest(true)}
+              className="w-full bg-gray-100 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-200 transition"
+            >
+              Continue as Guest
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  const userRole = (session.user as any)?.role || ROLES.USER;
-  const isAdmin = canManageSessions(userRole);
+  const userRole = (session?.user as any)?.role || ROLES.USER;
+  const isAdmin = session && canManageSessions(userRole);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -121,13 +130,17 @@ export default function Home() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Team Maker</h1>
               <p className="text-sm text-gray-600">
-                {userRole === ROLES.SUPER_ADMIN && '👑 Super Admin'}
-                {userRole === ROLES.COMMITTEE && '⭐ Committee'}
-                {userRole === ROLES.USER && '👤 User'}
+                {isGuest ? '👀 Guest Viewer' : (
+                  <>
+                    {userRole === ROLES.SUPER_ADMIN && '👑 Super Admin'}
+                    {userRole === ROLES.COMMITTEE && '⭐ Committee'}
+                    {userRole === ROLES.USER && '👤 User'}
+                  </>
+                )}
               </p>
             </div>
             <div className="flex items-center gap-4">
-              {canManageUsers(userRole) && (
+              {session && canManageUsers(userRole) && (
                 <a
                   href="/admin/users"
                   className="flex items-center gap-2 bg-purple-100 hover:bg-purple-200 text-purple-700 px-4 py-2 rounded-lg transition"
@@ -136,14 +149,23 @@ export default function Home() {
                   Manage Users
                 </a>
               )}
-              <span className="text-sm text-gray-700">{session.user?.email}</span>
-              <button
-                onClick={() => signOut()}
-                className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </button>
+              <span className="text-sm text-gray-700">{session?.user?.email || 'Guest'}</span>
+              {session ? (
+                <button
+                  onClick={() => signOut()}
+                  className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              ) : (
+                <button
+                  onClick={() => signIn('google')}
+                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition"
+                >
+                  Sign In
+                </button>
+              )}
             </div>
           </div>
         </div>
