@@ -112,6 +112,13 @@ export default function SessionDetailPage() {
                     players.push({ ...player, teamId: team.id });
                 });
             });
+
+            // Add unassigned players (from the new schema relation)
+            if (data.session.players) {
+                data.session.players.forEach((player: Player) => {
+                    players.push({ ...player, teamId: null });
+                });
+            }
             setAllPlayers(players);
             setLastSyncTime(data.session.lastSyncAt ? new Date(data.session.lastSyncAt) : null);
         } catch (error: any) {

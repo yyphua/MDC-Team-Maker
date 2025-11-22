@@ -106,6 +106,7 @@ export async function syncSessionWithSheet(sessionId: string, accessToken: strin
             for (const player of team.players) {
                 await prisma.player.create({
                     data: {
+                        sessionId: sessionId,
                         teamId: dbTeam.id,
                         uuid: player.id,
                         name: player.name,

@@ -26,6 +26,11 @@ export async function GET(
                         players: true,
                     },
                 },
+                players: {
+                    where: {
+                        teamId: null
+                    }
+                }
             },
         });
 

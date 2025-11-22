@@ -45,7 +45,7 @@ export async function PATCH(
 
         return NextResponse.json({ success: true, message: "Teams updated successfully" });
     } catch (error: unknown) {
-        console.error(error);
+        console.error("Team update error:", error);
         const message = error instanceof Error ? error.message : "Failed to update teams";
         return new NextResponse(message, { status: 500 });
     }

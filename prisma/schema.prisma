@@ -35,6 +35,7 @@ model Session {
   lastSyncAt  DateTime?
 
   teams       Team[]
+  players     Player[]
 }
 
 model Team {
@@ -51,6 +52,7 @@ model Team {
 
 model Player {
   id         String   @id @default(cuid())
+  sessionId  String?
   teamId     String?  // Optional - null for waiting list players
   uuid       String   // From Google Form
   name       String
@@ -61,6 +63,7 @@ model Player {
   status     String   @default("ACTIVE") // ACTIVE, WAITLIST
   createdAt  DateTime @default(now())
 
+  session    Session? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   team       Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   swapsAsRequester SwapRequest[] @relation("PlayerRequester")
